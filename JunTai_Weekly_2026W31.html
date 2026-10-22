@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>骏泰周报 2026-W31</title>
+<script src="chart.umd.min.js"></script>
+<script>
+/* 本地 Chart.js 优先；Pages/离线失败时回退国内 CDN（jsDelivr 常不可用） */
+if (typeof Chart === "undefined") {
+  document.write('<script src="https://lib.baomitu.com/Chart.js/4.4.1/chart.umd.min.js"><\/script>');
+}
+</script>
+<style>
+:root {
+  --bg: #e8eef4;
+  --surface: #f7fafc;
+  --ink: #102033;
+  --muted: #5b6c7d;
+  --line: #c5d2de;
+  --brand: #0a3d5c;
+  --accent: #c45c26;
+  --up: #1f7a4d;
+  --down: #b42318;
+  --net: #1a8a7a;
+  --input: #8e44ad;
+  --pos: #2980b9;
+  --off: #e67e22;
+  --oth: #c0392b;
+  --idle: #1e2a44;
+  --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font); color: var(--ink);
+  background: linear-gradient(180deg, #d5e3ef, var(--bg));
+  min-height: 100vh; line-height: 1.5;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 1rem 2.5rem; }
+.sticky-head {
+  position: sticky; top: 0; z-index: 40;
+  margin: 0 0 1rem;
+  padding: .15rem .05rem .75rem;
+  background: linear-gradient(180deg, rgba(232,238,244,.98), rgba(247,250,252,.96));
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(16, 32, 51, .06);
+  max-height: min(72vh, 640px);
+  overflow-y: auto;
+}
+.sticky-head .head-row,
+.sticky-head h2,
+.sticky-head .pills,
+.sticky-head .kpis {
+  padding-left: 1.05rem;
+  padding-right: 1.05rem;
+}
+.sticky-head .head-row { padding-top: .5rem; }
+.sticky-head .kpis { padding-bottom: .15rem; }
+.sticky-head h2 {
+  color: var(--brand);
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin: 0 0 .35rem;
+}
+.head-row {
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+  flex-wrap: nowrap; padding: .65rem 0 .45rem;
+  border-bottom: 1px solid var(--line); margin-bottom: .5rem;
+}
+.head-left {
+  display: flex; align-items: baseline; gap: .65rem; min-width: 0; flex: 1;
+  white-space: nowrap; overflow: hidden;
+}
+h1 {
+  color: var(--brand); font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+  margin: 0; line-height: 1.2; flex-shrink: 0;
+}
+.lede {
+  color: var(--muted); font-size: .82rem; margin: 0;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.head-actions {
+  display: flex; align-items: center; gap: .45rem; flex-shrink: 0;
+}
+.head-legend {
+  display: inline-flex; align-items: center; gap: .35rem;
+}
+.head-legend .delta { margin: 0; cursor: default; }
+.head-actions a {
+  color: var(--brand); font-size: .78rem; text-decoration: none;
+  padding: .26rem .55rem; border: 1px solid var(--line); border-radius: 3px; background: #fff;
+}
+.head-actions button {
+  border: 1px solid var(--brand); background: var(--brand); color: #fff; border-radius: 3px;
+  padding: .26rem .6rem; font: inherit; font-size: .74rem; cursor: pointer; font-weight: 600;
+}
+.head-actions button:hover { background: #0c4d72; }
+.head-actions a:hover { background: #e8eef4; }
+.pills { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 .55rem; }
+.pill {
+  display: inline-flex; align-items: center; gap: .35rem;
+  border: 1px solid var(--line); border-radius: 999px; padding: .22rem .62rem;
+  background: #fff; font-size: .74rem; cursor: pointer; color: var(--muted);
+}
+.pill.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+.pill input { display: none; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: 0; }
+.kpi {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+  padding: .65rem .8rem;
+}
+.kpi .label,
+.mini .k {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--brand);
+  letter-spacing: 0;
+  text-transform: none;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+.kpi .value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  margin: .1rem 0;
+}
+.kpi .meta { font-size: .74rem; color: var(--muted); }
+.delta {
+  display: inline-flex; align-items: center; gap: .2rem;
+  padding: .18rem .45rem;
+  border-radius: 999px; font-size: .72rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+  background: #e8eef4; color: var(--muted);
+}
+.delta.up {
+  color: #0f5c38; background: #d8f3e3; box-shadow: inset 0 0 0 1px #9fd4b5;
+}
+.delta.down {
+  color: #8f1d14; background: #fde2df; box-shadow: inset 0 0 0 1px #efb0a8;
+}
+.delta.flat {
+  color: #445566; background: #e8eef4; box-shadow: inset 0 0 0 1px #c5d2de;
+}
+.kpi .delta, .mini .delta { margin-top: .28rem; }
+.panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+  padding: 1rem 1.05rem; margin-bottom: 1rem;
+}
+.panel h2 { color: var(--brand); font-size: 1.02rem; margin-bottom: .35rem; }
+.panel .hint { font-size: .8rem; color: var(--muted); margin-bottom: .6rem; }
+.mini-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-bottom: .75rem; }
+.mini {
+  border: 1px solid var(--line); border-radius: 3px; padding: .55rem .6rem; background: #fff;
+}
+.mini.chg {
+  border-color: #6b7280;
+  background: #f3f4f6;
+}
+.mini.chg .k { color: var(--brand); }
+.mini.chg .v { color: #4b5563; }
+.mini .v { font-size: 1.05rem; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; }
+.mini .d { font-size: .72rem; }
+.mini .d .delta { margin-top: .2rem; }
+.chart-box { position: relative; height: 300px; }
+.chart-box.tall { height: 360px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; margin-bottom: .55rem; }
+.seg button {
+  border: 0; background: transparent; padding: .32rem .7rem; cursor: pointer;
+  font: inherit; font-size: .78rem; color: var(--muted);
+}
+.seg button.on { background: var(--brand); color: #fff; }
+table {
+  width: 100%; border-collapse: collapse; font-size: .8rem;
+  table-layout: fixed;
+}
+th, td { padding: .4rem .45rem; border-bottom: 1px solid var(--line); vertical-align: middle; text-align: center; }
+th { color: var(--muted); font-size: .68rem; text-transform: uppercase; background: #edf2f7; }
+th.num, td.num { text-align: center; font-variant-numeric: tabular-nums; }
+td.cutter { text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+tbody tr:nth-child(odd) { background: #ffffff; }
+tbody tr:nth-child(even) { background: #eef4f9; }
+tbody tr:hover { background: #e2edf6; }
+col.c-cutter { width: 22%; }
+col.c-num { width: 13%; }
+@media (max-width: 900px) {
+  .kpis, .mini-kpis { grid-template-columns: 1fr 1fr; }
+  .chart-box, .chart-box.tall { height: 270px; }
+}
+@media (max-width: 560px) {
+  .kpis, .mini-kpis { grid-template-columns: 1fr; }
+}
+.improve-section { margin-top: 0; }
+.improve-cards {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem;
+}
+.improve-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 4px;
+  border-top: 3px solid var(--accent); padding: .85rem .9rem;
+}
+.improve-card h3 {
+  color: var(--brand); font-size: .88rem; margin-bottom: .55rem;
+}
+.improve-card ul {
+  margin: 0; padding-left: 1.15rem; color: var(--ink);
+  font-size: .82rem; line-height: 1.55;
+}
+.improve-card li { margin-bottom: .4rem; }
+.improve-card li:last-child { margin-bottom: 0; }
+.improve-card .placeholder {
+  color: var(--muted); font-size: .82rem; font-style: italic; min-height: 3.2rem; margin: 0;
+}
+@media (max-width: 900px) {
+  .improve-cards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .improve-cards { grid-template-columns: 1fr; }
+}
+.footer {
+  margin-top: 1.25rem;
+  padding-top: .75rem;
+  border-top: 1px dashed var(--line);
+  font-size: .7rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+body.is-printing .chart-box,
+body.is-printing .chart-box.tall {
+  height: 360px !important;
+  max-height: 360px !important;
+  overflow: hidden !important;
+}
+body.is-printing .chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 360px !important;
+}
+body.is-printing .kpis {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+body.is-printing .mini-kpis {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 7mm 8mm;
+  }
+  html, body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  body { min-height: 0; }
+  .no-print { display: none !important; }
+  .wrap {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    min-height: 283mm;
+    display: flex;
+    flex-direction: column;
+  }
+  .main-content { flex: 1 1 auto; }
+  .sticky-head {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+    backdrop-filter: none;
+    margin-bottom: .4rem;
+    padding: .05rem 0 .35rem;
+  }
+  .sticky-head .head-row,
+  .sticky-head h2,
+  .sticky-head .kpis {
+    padding-left: .45rem;
+    padding-right: .45rem;
+  }
+  .head-row { padding: .25rem 0 .25rem; margin-bottom: .25rem; }
+  h1 { font-size: 1rem; }
+  .lede { font-size: .68rem; }
+  .sticky-head h2, .panel h2 { font-size: .82rem; margin-bottom: .2rem; }
+  .kpis {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .35rem;
+  }
+  .kpi { padding: .35rem .45rem; min-width: 0; }
+  .kpi .label, .mini .k { font-size: .78rem; }
+  .kpi .value, .mini .v { font-size: .88rem; }
+  .kpi .meta, .mini .d, .delta { font-size: .58rem; }
+  .panel {
+    padding: .45rem .55rem;
+    margin-bottom: .4rem;
+  }
+  .panel .hint { display: none; }
+  .mini-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: .3rem;
+    margin-bottom: .35rem;
+  }
+  .mini { padding: .3rem .35rem; min-width: 0; }
+  .chart-box, .chart-box.tall {
+    height: 360px !important;
+    max-height: 360px !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+  .chart-box canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 360px !important;
+  }
+  .improve-section { break-inside: avoid; }
+  .improve-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .35rem;
+  }
+  .improve-card { padding: .4rem .45rem; }
+  .improve-card h3 { font-size: .72rem; margin-bottom: .2rem; }
+  .improve-card ul { font-size: .62rem; line-height: 1.35; }
+  .improve-card li { margin-bottom: .15rem; }
+  .footer {
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: .4rem .15rem 0;
+    border-top: 1px solid var(--line);
+    font-size: .52rem;
+    line-height: 1.3;
+    color: #5b6c7d;
+  }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="main-content">
+  <div class="sticky-head">
+    <div class="head-row">
+      <div class="head-left">
+        <h1 id="weekTitle">2026-W31 生产周报</h1>
+        <p class="lede" id="weekRange">2026-07-27 ~ 2026-08-02</p>
+      </div>
+      <div class="head-actions">
+        <span class="head-legend" aria-label="对比标签颜色说明">
+          <span class="delta up">▲ 改善</span>
+          <span class="delta down">▼ 倒退</span>
+        </span>
+        <button type="button" id="btnExportPdf" class="no-print">导出 PDF</button>
+        <a class="no-print" href="index.html">← 周报目录</a>
+      </div>
+    </div>
+    <h2>主要生产指标（本周平均）</h2>
+    <section class="kpis" id="mainKpis"></section>
+  </div>
+
+  <section class="panel">
+    <h2>工时细分</h2>
+    <p class="hint">横轴固定 ISO 周 7 天；无产日留白占位。系列顺序：净裁剪 → 定位 → 卸料 → Other → 换床（顶部）。换床为相邻任务间隔，灰色区分。柱内数字为净裁剪/定位/卸料占当日 Available 工时百分比。</p>
+    <div class="mini-kpis" id="timeKpis"></div>
+    <div class="chart-box tall"><canvas id="chartTimeStack"></canvas></div>
+  </section>
+
+  <section class="panel improve-section">
+    <h2>改善建议</h2>
+    <div class="improve-cards">
+      <article class="improve-card">
+        <h3>建议 1</h3>
+        <p class="placeholder">（待填写）</p>
+      </article>
+      <article class="improve-card">
+        <h3>建议 2</h3>
+        <p class="placeholder">（待填写）</p>
+      </article>
+    </div>
+  </section>
+  </div>
+
+  <footer class="footer" id="footerNote"></footer>
+</div>
+
+<script>
+const DATA = {"iso_key": "2026-W31", "week_start": "2026-07-27", "week_end": "2026-08-02", "week_month_ym": "2026-07", "month_ym": "2026-06", "sources": ["Production_Markers_20260601_20260630.xlsx", "Production_Markers_20260701_20260731.xlsx", "Production_Markers_20260801_20260831.xlsx", "Production_Markers_20260901_20260930.xlsx", "Production_Markers_20261001_20261018 (1).xlsx"], "config": {"mu_source": "algopex_machine_use", "mu_gold_file": "machine_use_daily.json", "mu_source_chart": "Screenshot 2026-10-19 175629.png (daily MU 10/13~10/18); Screenshot 2026-10-12 105330.png (daily MU 10/6~10/11); Screenshot 2026-10-12 104518.png (weekly W41); prior weeks from earlier Algopex charts", "h_avail": 10.55, "input_h_per_cutter_day": 0.85, "note_zh": "稼动率%=Algopex Machine Use %（machine_use_daily.json，截屏柱顶值）；周/月 MU=100×Σnet_h÷Σavailable_h（available=net÷日度MU%；与 Algopex Summary 周柱一致）。Available/Idle 由 MU 反推：Available=Net÷(MU/100)；Input≈0.85h/机/日（估算）；Idle=max(0,Available−Net−Input−定位−卸料−Other)。速度/产量/工时仍来自 Production_Markers。"}, "cutters": [{"id": "FC25JN6929", "name": "FC25JN6929", "markers": 3249}], "week_rows": [{"day": "2026-07-27", "ym": "2026-07", "iso_key": "2026-W31", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3655.55, "material_m": 189.79, "net_h": 8.2886, "net_h_raw": 8.2886, "pos_h": 0.6911, "off_h": 0.0347, "oth_h": 0.6022, "chg_h": 2.5967, "speed": 7.3505, "markers": 39, "mu_pct": 77.49}, {"day": "2026-07-28", "ym": "2026-07", "iso_key": "2026-W31", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 4009.92, "material_m": 191.9, "net_h": 8.5764, "net_h_raw": 8.5764, "pos_h": 0.6911, "off_h": 0.0367, "oth_h": 0.3664, "chg_h": 2.6937, "speed": 7.7926, "markers": 40, "mu_pct": 80.85}, {"day": "2026-07-29", "ym": "2026-07", "iso_key": "2026-W31", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3822.32, "material_m": 143.58, "net_h": 9.4367, "net_h_raw": 9.4367, "pos_h": 0.5183, "off_h": 0.0, "oth_h": 0.3147, "chg_h": 2.0171, "speed": 6.7508, "markers": 28, "mu_pct": 87.11}, {"day": "2026-07-30", "ym": "2026-07", "iso_key": "2026-W31", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3833.27, "material_m": 177.04, "net_h": 8.94, "net_h_raw": 8.94, "pos_h": 0.7167, "off_h": 0.0478, "oth_h": 0.5508, "chg_h": 2.3463, "speed": 7.1463, "markers": 38, "mu_pct": 81.83}, {"day": "2026-07-31", "ym": "2026-07", "iso_key": "2026-W31", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3220.43, "material_m": 164.42, "net_h": 9.4117, "net_h_raw": 9.4117, "pos_h": 0.495, "off_h": 0.0164, "oth_h": 0.3808, "chg_h": 1.7665, "speed": 5.7029, "markers": 28, "mu_pct": 88.71}, {"day": "2026-08-01", "ym": "2026-08", "iso_key": "2026-W31", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3613.38, "material_m": 124.45, "net_h": 9.0119, "net_h_raw": 9.0119, "pos_h": 0.5167, "off_h": 0.0108, "oth_h": 0.3692, "chg_h": 2.4679, "speed": 6.6826, "markers": 28, "mu_pct": 84.65}], "prev_rows": [{"day": "2026-07-20", "ym": "2026-07", "iso_key": "2026-W30", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3787.49, "material_m": 160.14, "net_h": 9.6844, "net_h_raw": 9.6844, "pos_h": 0.5694, "off_h": 0.0061, "oth_h": 0.2356, "chg_h": 1.2928, "speed": 6.5182, "markers": 33, "mu_pct": 84.0}, {"day": "2026-07-21", "ym": "2026-07", "iso_key": "2026-W30", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 4734.28, "material_m": 171.24, "net_h": 11.6167, "net_h_raw": 11.6167, "pos_h": 0.6561, "off_h": 0.0333, "oth_h": 0.1928, "chg_h": 1.0416, "speed": 6.7924, "markers": 36, "mu_pct": 85.99}, {"day": "2026-07-22", "ym": "2026-07", "iso_key": "2026-W30", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3949.92, "material_m": 193.01, "net_h": 10.9131, "net_h_raw": 10.9131, "pos_h": 0.9508, "off_h": 0.005, "oth_h": 0.1547, "chg_h": 1.5465, "speed": 6.0324, "markers": 38, "mu_pct": 87.83}, {"day": "2026-07-23", "ym": "2026-07", "iso_key": "2026-W30", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 4185.8, "material_m": 190.92, "net_h": 10.06, "net_h_raw": 10.06, "pos_h": 0.6297, "off_h": 0.0153, "oth_h": 0.225, "chg_h": 1.4019, "speed": 6.9347, "markers": 38, "mu_pct": 85.5}, {"day": "2026-07-24", "ym": "2026-07", "iso_key": "2026-W30", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 4016.14, "material_m": 167.62, "net_h": 10.1539, "net_h_raw": 10.1539, "pos_h": 0.5844, "off_h": 0.0122, "oth_h": 0.4286, "chg_h": 1.3561, "speed": 6.5921, "markers": 35, "mu_pct": 85.3}, {"day": "2026-07-25", "ym": "2026-07", "iso_key": "2026-W30", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 4074.63, "material_m": 203.24, "net_h": 9.6078, "net_h_raw": 9.6078, "pos_h": 0.4797, "off_h": 0.0142, "oth_h": 0.1928, "chg_h": 1.757, "speed": 7.0683, "markers": 34, "mu_pct": 88.58}], "month_rows": [{"day": "2026-06-17", "ym": "2026-06", "iso_key": "2026-W25", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 10.32, "material_m": 0.46, "net_h": 0.0225, "net_h_raw": 0.0225, "pos_h": 0.035, "off_h": 0.0, "oth_h": 0.0, "chg_h": 0.0, "speed": 7.6444, "markers": 1, "mu_pct": 0.82}, {"day": "2026-06-18", "ym": "2026-06", "iso_key": "2026-W25", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2199.67, "material_m": 94.24, "net_h": 5.5822, "net_h_raw": 5.5822, "pos_h": 0.8125, "off_h": 0.0067, "oth_h": 0.5717, "chg_h": 5.1513, "speed": 6.5675, "markers": 29, "mu_pct": 42.79}, {"day": "2026-06-20", "ym": "2026-06", "iso_key": "2026-W25", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 1268.96, "material_m": 59.28, "net_h": 4.1922, "net_h_raw": 4.1922, "pos_h": 0.3525, "off_h": 0.3208, "oth_h": 2.2014, "chg_h": 4.5999, "speed": 5.0449, "markers": 19, "mu_pct": 0.0}, {"day": "2026-06-21", "ym": "2026-06", "iso_key": "2026-W25", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 1805.63, "material_m": 96.57, "net_h": 4.6469, "net_h_raw": 4.6469, "pos_h": 0.6669, "off_h": 0.0244, "oth_h": 0.2542, "chg_h": 5.113, "speed": 6.476, "markers": 21, "mu_pct": 36.11}, {"day": "2026-06-22", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2265.71, "material_m": 91.24, "net_h": 7.0061, "net_h_raw": 7.0061, "pos_h": 1.0833, "off_h": 0.0922, "oth_h": 1.3422, "chg_h": 2.6241, "speed": 5.3898, "markers": 21, "mu_pct": 44.8}, {"day": "2026-06-23", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3068.25, "material_m": 138.49, "net_h": 7.5064, "net_h_raw": 7.5064, "pos_h": 1.7508, "off_h": 0.0092, "oth_h": 0.7175, "chg_h": 4.1687, "speed": 6.8125, "markers": 25, "mu_pct": 59.6}, {"day": "2026-06-24", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2397.03, "material_m": 121.65, "net_h": 8.1611, "net_h_raw": 8.1611, "pos_h": 0.7214, "off_h": 0.0164, "oth_h": 1.7069, "chg_h": 3.7057, "speed": 4.8952, "markers": 26, "mu_pct": 55.71}, {"day": "2026-06-25", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 3411.9, "material_m": 173.78, "net_h": 7.9206, "net_h_raw": 7.9206, "pos_h": 0.8378, "off_h": 0.0389, "oth_h": 1.0239, "chg_h": 3.4051, "speed": 7.1794, "markers": 37, "mu_pct": 63.32}, {"day": "2026-06-26", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2120.6, "material_m": 89.3, "net_h": 6.6103, "net_h_raw": 6.6103, "pos_h": 0.6928, "off_h": 0.0486, "oth_h": 3.7086, "chg_h": 2.9153, "speed": 5.3467, "markers": 20, "mu_pct": 63.3}, {"day": "2026-06-27", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2095.99, "material_m": 95.17, "net_h": 5.8572, "net_h_raw": 5.8572, "pos_h": 0.6278, "off_h": 0.0533, "oth_h": 1.5511, "chg_h": 5.1598, "speed": 5.9641, "markers": 23, "mu_pct": 50.45}, {"day": "2026-06-28", "ym": "2026-06", "iso_key": "2026-W26", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 1198.95, "material_m": 66.87, "net_h": 4.1289, "net_h_raw": 4.1289, "pos_h": 1.2056, "off_h": 0.0319, "oth_h": 1.3944, "chg_h": 2.9282, "speed": 4.8397, "markers": 14, "mu_pct": 44.54}, {"day": "2026-06-29", "ym": "2026-06", "iso_key": "2026-W27", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2887.44, "material_m": 132.67, "net_h": 7.91, "net_h_raw": 7.91, "pos_h": 0.6392, "off_h": 0.0667, "oth_h": 0.6225, "chg_h": 3.8084, "speed": 6.0839, "markers": 25, "mu_pct": 39.66}, {"day": "2026-06-30", "ym": "2026-06", "iso_key": "2026-W27", "cutter": "FC25JN6929", "cutter_name": "FC25JN6929", "perimeter_m": 2431.21, "material_m": 114.47, "net_h": 7.9758, "net_h_raw": 7.9758, "pos_h": 0.4697, "off_h": 0.0119, "oth_h": 1.7947, "chg_h": 3.1367, "speed": 5.0804, "markers": 21, "mu_pct": 69.98}]};
+const state = {
+  selected: {},
+  charts: {}
+};
+
+function destroyChart(key) {
+  if (state.charts[key]) { state.charts[key].destroy(); state.charts[key] = null; }
+}
+
+function selectedCutters() {
+  return DATA.cutters.map(c => c.id).filter(id => state.selected[id]);
+}
+
+function filterRows(rows) {
+  const sel = new Set(selectedCutters());
+  return rows.filter(r => sel.has(r.cutter));
+}
+
+function enrichDay(rows, hAvail, inputPer) {
+  const byDay = {};
+  rows.forEach(r => {
+    if (!byDay[r.day]) byDay[r.day] = { day: r.day, cutters: new Set(), perimeter_m: 0, material_m: 0, net_h: 0, pos_h: 0, off_h: 0, oth_h: 0, chg_h: 0, speeds: [], mu_pcts: [] };
+    const d = byDay[r.day];
+    d.cutters.add(r.cutter);
+    d.perimeter_m += r.perimeter_m;
+    d.material_m += r.material_m;
+    d.net_h += r.net_h;
+    d.pos_h += r.pos_h;
+    d.off_h += r.off_h;
+    d.oth_h += r.oth_h;
+    d.chg_h += (r.chg_h || 0);
+    if (r.speed != null && r.net_h > 0) d.speeds.push(r.speed);
+    if (r.mu_pct != null && !Number.isNaN(r.mu_pct)) d.mu_pcts.push(r.mu_pct);
+  });
+  return Object.keys(byDay).sort().map(day => {
+    const d = byDay[day];
+    const n = d.cutters.size;
+    const input_h = n * inputPer;
+    const speed = d.speeds.length ? d.speeds.reduce((a,b)=>a+b,0)/d.speeds.length : null;
+    const muFromGold = d.mu_pcts.length > 0;
+    const mu = muFromGold ? d.mu_pcts.reduce((a,b)=>a+b,0)/d.mu_pcts.length
+      : (n * hAvail > 0 ? 100 * d.net_h / (n * hAvail) : null);
+    const avail = (mu != null && mu > 0) ? d.net_h / (mu / 100) : n * hAvail;
+    const idle_h = Math.max(0, avail - d.net_h - input_h - d.pos_h - d.off_h - d.oth_h);
+    return {
+      day, n, avail_h: avail, input_h, idle_h,
+      net_h: d.net_h, pos_h: d.pos_h, off_h: d.off_h, oth_h: d.oth_h, chg_h: d.chg_h,
+      material_m: d.material_m, perimeter_m: d.perimeter_m, speed, mu, mu_from_gold: muFromGold
+    };
+  });
+}
+
+function aggPeriod(rows) {
+  const days = enrichDay(rows, DATA.config.h_avail, DATA.config.input_h_per_cutter_day);
+  if (!days.length) {
+    return { days: [], material_m: 0, net_h: 0, pos_h: 0, off_h: 0, oth_h: 0, chg_h: 0, input_h: 0, idle_h: 0, avail_h: 0, mu: null, speed: null, active_days: 0 };
+  }
+  const sum = (k) => days.reduce((a,d)=>a+d[k],0);
+  const speeds = days.map(d => d.speed).filter(v => v != null);
+  const mus = days.map(d => d.mu).filter(v => v != null);
+  const avail = sum("avail_h");
+  const net = sum("net_h");
+  // Match Python weekly_mu_weighted: only days with Algopex gold MU (skip fallback).
+  let muWeighted = null;
+  {
+    let netFromMu = 0;
+    let availFromMu = 0;
+    days.forEach(d => {
+      if (d.mu_from_gold && d.mu != null && d.mu > 0 && d.net_h > 0) {
+        netFromMu += d.net_h;
+        availFromMu += d.net_h / (d.mu / 100);
+      }
+    });
+    if (availFromMu > 0) muWeighted = 100 * netFromMu / availFromMu;
+  }
+  return {
+    days,
+    material_m: sum("material_m"),
+    net_h: net,
+    pos_h: sum("pos_h"),
+    off_h: sum("off_h"),
+    oth_h: sum("oth_h"),
+    chg_h: sum("chg_h"),
+    input_h: sum("input_h"),
+    idle_h: sum("idle_h"),
+    avail_h: avail,
+    mu: muWeighted != null ? muWeighted : (avail > 0 ? 100 * net / avail : null),
+    speed: speeds.length ? speeds.reduce((a,b)=>a+b,0)/speeds.length : null,
+    active_days: days.length
+  };
+}
+
+function monthDailyAvg(monthRows) {
+  const days = enrichDay(monthRows, DATA.config.h_avail, DATA.config.input_h_per_cutter_day);
+  if (!days.length) return null;
+  const n = days.length;
+  const avg = (k) => days.reduce((a,d)=>a+d[k],0) / n;
+  const speeds = days.map(d => d.speed).filter(v => v != null);
+  const mus = days.map(d => d.mu).filter(v => v != null);
+  return {
+    material_m: avg("material_m"),
+    net_h: avg("net_h"),
+    pos_h: avg("pos_h"),
+    off_h: avg("off_h"),
+    oth_h: avg("oth_h"),
+    chg_h: avg("chg_h"),
+    input_h: avg("input_h"),
+    idle_h: avg("idle_h"),
+    mu: (() => {
+      let netFromMu = 0;
+      let availFromMu = 0;
+      days.forEach(d => {
+        if (d.mu_from_gold && d.mu != null && d.mu > 0 && d.net_h > 0) {
+          netFromMu += d.net_h;
+          availFromMu += d.net_h / (d.mu / 100);
+        }
+      });
+      if (availFromMu > 0) return 100 * netFromMu / availFromMu;
+      return mus.length ? mus.reduce((a,b)=>a+b,0)/mus.length : null;
+    })(),
+    speed: speeds.length ? speeds.reduce((a,b)=>a+b,0)/speeds.length : null,
+    active_days: n
+  };
+}
+
+function fmt(v, digits) {
+  if (v == null || Number.isNaN(v)) return "—";
+  return Number(v).toFixed(digits);
+}
+
+const WEEKDAY_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+function dayAxisLabel(isoDay) {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  const wd = WEEKDAY_ZH[new Date(y, m - 1, d).getDay()];
+  return `${isoDay.slice(5)} ${wd}`;
+}
+
+function addDaysIso(isoDay, n) {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + n);
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return `${dt.getFullYear()}-${mm}-${dd}`;
+}
+
+function emptyChartDay(isoDay) {
+  return {
+    day: isoDay, n: 0, avail_h: 0, input_h: 0, idle_h: 0,
+    net_h: 0, pos_h: 0, off_h: 0, oth_h: 0, chg_h: 0,
+    material_m: 0, perimeter_m: 0, speed: null, mu: null, placeholder: true
+  };
+}
+
+function padWeekChartDays(days) {
+  const start = DATA.week_start;
+  const byDay = {};
+  (days || []).forEach(d => { byDay[d.day] = d; });
+  const out = [];
+  for (let i = 0; i < 7; i++) {
+    const iso = addDaysIso(start, i);
+    out.push(byDay[iso] || emptyChartDay(iso));
+  }
+  return out;
+}
+
+function deltaHtml(cur, base, digits, unit, label = "对比上周", lowerBetter = false) {
+  if (cur == null || base == null || base === 0) {
+    return `<span class="delta flat">${label} —</span>`;
+  }
+  const d = cur - base;
+  const pct = 100 * d / Math.abs(base);
+  // Direction of change (arrow) vs whether the change is "good" (color).
+  const rose = d > 0.0001;
+  const fell = d < -0.0001;
+  const good = lowerBetter ? fell : rose;
+  const bad = lowerBetter ? rose : fell;
+  const cls = good ? "up" : (bad ? "down" : "flat");
+  const arrow = rose ? "▲" : (fell ? "▼" : "●");
+  const sign = d > 0 ? "+" : "";
+  const u = unit ? ` ${unit}` : "";
+  // KPI 升降统一用 percentage points 口径
+  if (unit === "pp") {
+    return `<span class="delta ${cls}">${arrow} ${label} ${sign}${d.toFixed(digits)}${u}</span>`;
+  }
+  return `<span class="delta ${cls}">${arrow} ${label} ${sign}${d.toFixed(digits)}${u}（${sign}${pct.toFixed(1)} pp）</span>`;
+}
+
+function initSelection() {
+  (DATA.cutters || []).forEach(c => { state.selected[c.id] = true; });
+}
+
+function renderMainKpis(week, monthAvg, prev) {
+  const cards = [
+    { label: "稼动率 (%)", unit: "%", cur: week.mu, month: monthAvg && monthAvg.mu, prev: prev && prev.mu, digits: 1 },
+    { label: "裁剪速度 (m/min)", unit: " m/min", cur: week.speed, month: monthAvg && monthAvg.speed, prev: prev && prev.speed, digits: 2 },
+    { label: "产量 Cut Material (m)", unit: " m", cur: week.material_m, month: monthAvg && monthAvg.material_m * (week.active_days || 1), prev: prev && prev.material_m, digits: 1, monthIsTotal: true }
+  ];
+  // month average for material: show daily avg * this week active days as comparable total? Plan says 日均 for month.
+  // Display month as daily average for material in meta, and for MU/speed as daily avg (already).
+  document.getElementById("mainKpis").innerHTML = cards.map((c, idx) => {
+    let monthShow, monthLabel;
+    if (idx === 2) {
+      monthShow = monthAvg ? monthAvg.material_m : null;
+      monthLabel = `上月日均 ${fmt(monthShow, 1)} m`;
+    } else {
+      monthShow = c.month;
+      monthLabel = `上月均 ${fmt(monthShow, c.digits)}${c.unit}`;
+    }
+    const unitSuffix = c.unit.trim();
+    const deltaUnit = unitSuffix === "%" ? "pp" : unitSuffix;
+    return `<div class="kpi">
+      <div class="label">${c.label}</div>
+      <div class="value">${fmt(c.cur, c.digits)}</div>
+      <div class="meta">${monthLabel}</div>
+      <div class="meta">${deltaHtml(c.cur, c.prev, c.digits, deltaUnit, "对比上周")}</div>
+      <div class="meta">${deltaHtml(c.cur, c.month, c.digits, deltaUnit, "对比上月")}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderTimeKpis(week, monthAvg, prev) {
+  const items = [
+    { k: "net_h", label: "净裁剪 (h)", dig: 1, lowerBetter: false },
+    { k: "pos_h", label: "定位 (h)", dig: 1, lowerBetter: true },
+    { k: "off_h", label: "卸料 (h)", dig: 1, lowerBetter: true },
+    { k: "chg_h", label: "换床 (h)", dig: 1, lowerBetter: true, accent: true }
+  ];
+  const getW = (k) => week[k];
+  const getP = (k) => (prev ? prev[k] : null);
+  const getM = (k) => (monthAvg ? monthAvg[k] : null);
+  document.getElementById("timeKpis").innerHTML = items.map(it => {
+    const cur = getW(it.k);
+    const m = getM(it.k);
+    const monthEq = m == null ? null : m * (week.active_days || 1);
+    const cls = it.accent ? "mini chg" : "mini";
+    return `<div class="${cls}">
+      <div class="k">${it.label}</div>
+      <div class="v">${fmt(cur, it.dig)}</div>
+      <div class="d">上月日均 ${fmt(m, it.dig)} h</div>
+      <div class="d">${deltaHtml(cur, getP(it.k), it.dig, "h", "对比上周", it.lowerBetter)}</div>
+      <div class="d">${deltaHtml(cur, monthEq, it.dig, "h", "对比上月", it.lowerBetter)}</div>
+    </div>`;
+  }).join("");
+}
+
+function pctOfAvail(val, avail) {
+  if (avail == null || avail <= 0 || val == null || val <= 0) return null;
+  return 100 * val / avail;
+}
+
+function stackPctLabelPlugin(days) {
+  const specs = [
+    { ds: 0, key: "net_h" },
+    { ds: 1, key: "pos_h" },
+    { ds: 2, key: "off_h" }
+  ];
+  return {
+    id: "stackPctLabels",
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      specs.forEach(({ ds, key }) => {
+        const meta = chart.getDatasetMeta(ds);
+        if (meta.hidden) return;
+        meta.data.forEach((bar, i) => {
+          const day = days[i];
+          if (!day) return;
+          const pct = pctOfAvail(day[key], day.avail_h);
+          if (pct == null || pct < 3) return;
+          const top = Math.min(bar.y, bar.base);
+          const h = Math.abs(bar.base - bar.y);
+          if (h < 13) return;
+          ctx.save();
+          ctx.font = "600 10px Segoe UI, PingFang SC, Microsoft YaHei, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "rgba(0,0,0,0.45)";
+          ctx.shadowBlur = 2;
+          ctx.fillText(`${pct.toFixed(0)}%`, bar.x, top + h / 2);
+          ctx.restore();
+        });
+      });
+    }
+  };
+}
+
+function renderTimeStack(week) {
+  destroyChart("stack");
+  const days = padWeekChartDays(week.days);
+  const labels = days.map(d => dayAxisLabel(d.day));
+  state.charts.stack = new Chart(document.getElementById("chartTimeStack"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "净裁剪 (h)", data: days.map(d => d.net_h), backgroundColor: "#1a8a7a", stack: "t" },
+        { label: "定位 (h)", data: days.map(d => d.pos_h), backgroundColor: "#2980b9", stack: "t" },
+        { label: "卸料 (h)", data: days.map(d => d.off_h), backgroundColor: "#e67e22", stack: "t" },
+        { label: "Other (h)", data: days.map(d => d.oth_h), backgroundColor: "#c0392b", stack: "t" },
+        { label: "换床 (h)", data: days.map(d => d.chg_h), backgroundColor: "#6b7280", stack: "t" }
+      ]
+    },
+    plugins: [stackPctLabelPlugin(days)],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { stacked: true, title: { display: true, text: "工时 (h)" } }
+      }
+    }
+  });
+}
+
+function renderAll() {
+  const weekRows = filterRows(DATA.week_rows);
+  const prevRows = filterRows(DATA.prev_rows || []);
+  const monthRows = filterRows(DATA.month_rows || []);
+  const week = aggPeriod(weekRows);
+  const prev = prevRows.length ? aggPeriod(prevRows) : null;
+  const monthAvg = monthRows.length ? monthDailyAvg(monthRows) : null;
+
+  renderMainKpis(week, monthAvg, prev);
+  renderTimeKpis(week, monthAvg, prev);
+  renderTimeStack(week);
+
+  const cutterLabel = (DATA.cutters && DATA.cutters[0]) ? (DATA.cutters[0].name || DATA.cutters[0].id) : "FC25JN6929";
+  const muNote = (DATA.config.mu_source === "algopex_machine_use")
+    ? `稼动率%=Algopex Machine Use（${DATA.config.mu_gold_file || "machine_use_daily.json"}，日度柱顶值）；周/月 MU=100×Σnet÷Σavailable（与 Summary 周柱一致）；`
+    : `稼动率%=100×净裁剪/Available，Available=活跃机台日×${DATA.config.h_avail}h；`;
+  document.getElementById("footerNote").innerHTML =
+    `单机台 ${cutterLabel}。口径：不过滤 Reliable/Completed；速度=日均；产量=Σ Cut Material Length (m)；` +
+    muNote +
+    `Available 由 MU 反推（Net÷MU%）；Input≈${DATA.config.input_h_per_cutter_day}h/机/日（估算）；Idle=Available−净裁剪−Input−定位−卸料−Other。` +
+    `上月日均基准=${DATA.month_ym}` +
+    (DATA.week_month_ym ? `（本周所属月 ${DATA.week_month_ym}）` : ``) +
+    `。数据源：${(DATA.sources||[]).join(" · ")}`;
+}
+
+initSelection();
+renderAll();
+
+function resizeCharts() {
+  Object.keys(state.charts).forEach((key) => {
+    const chart = state.charts[key];
+    if (chart) chart.resize();
+  });
+}
+
+window.addEventListener("beforeprint", () => {
+  if (!document.body.dataset.prevTitle) {
+    document.body.dataset.prevTitle = document.title;
+  }
+  const isoTag = String(DATA.iso_key || "").replace("-", "");
+  document.title = `骏泰力克裁床生产周报${isoTag}`;
+  document.body.classList.add("is-printing");
+  resizeCharts();
+});
+window.addEventListener("afterprint", () => {
+  document.body.classList.remove("is-printing");
+  if (document.body.dataset.prevTitle) {
+    document.title = document.body.dataset.prevTitle;
+    delete document.body.dataset.prevTitle;
+  }
+  resizeCharts();
+});
+
+document.getElementById("btnExportPdf").addEventListener("click", () => {
+  document.body.dataset.prevTitle = document.title;
+  const isoTag = String(DATA.iso_key || "").replace("-", "");
+  document.title = `骏泰力克裁床生产周报${isoTag}`;
+  document.body.classList.add("is-printing");
+  resizeCharts();
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      window.print();
+    }, 120);
+  });
+});
+</script>
+</body>
+</html>
